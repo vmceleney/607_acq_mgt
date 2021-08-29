@@ -1,0 +1,112 @@
+---
+title: "How Americans View Biden's Response To The Coronavirus Crisis"
+author: "Cliff Lee"
+date: "8/26/2021"
+output: html_document
+---
+
+## Introduction
+
+The article shows various graphs comparing how Americans view Biden's handling of the pandemic to that of Trump. Americans answered questions regarding the following subjects: Presidential response; their feelings about infections; and feelings about the economy.
+
+This assignment focuses on data concerning the following question: __*Do Americans approve of Biden's response to the coronavirus crisis?*__
+
+
+__Article Link:__ https://projects.fivethirtyeight.com/coronavirus-polls/
+
+
+## Initialization and package inclusion
+
+The first block sets this project's configurations and include packages for the rest of the markdown file.
+```{r setup}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Packages listings
+
+# For str_replace function
+library(stringr)
+
+# Basic data frame operations
+library(tidyverse)
+
+```
+
+
+## Load CSV into a data_frame variable
+```{r}
+
+# Load the CSV from Github
+data_frame = read.table(file="https://raw.githubusercontent.com/cliftonleesps/607_acq_mgt/main/covid-19-polls-master/covid_approval_polls_adjusted.csv", header=TRUE,sep=",")
+
+```
+
+
+## Subsetting
+
+This block performs a couple of basic data frame operations:
+
+* Filters out observations
+* Removes unnecessary columns
+* Reorders columns
+
+```{r}
+# Since we only want to know about Biden's approval rating, we'll filter out observations where he is not the President
+data_frame <- filter(data_frame, subject == 'Biden')
+
+# Remove a few unnecessary columns
+data_frame <- select(data_frame, party,enddate, pollster, samplesize,approve_adjusted,disapprove_adjusted)
+
+# Sort by Poll Date, party
+data_frame <- arrange(data_frame, enddate, party)
+
+# Reorder the columns
+data_frame <- data_frame[,c("enddate","pollster","samplesize","party","approve_adjusted","disapprove_adjusted")]
+
+```
+
+
+
+
+## Transformations
+
+The next block further helps the reader by renaming observations to more meaningful values. Any explanation of values can be retrieved via their Github page listed below.
+
+__Link:__ https://github.com/fivethirtyeight/covid-19-polls
+
+
+```{r}
+
+
+# Map party key value pairs
+data_frame$party <- str_replace(string=data_frame$party, pattern="^D$", replacement="Democrat")
+data_frame$party <- str_replace(string=data_frame$party, pattern="^R$", replacement="Republican")
+data_frame$party <- str_replace(string=data_frame$party, pattern="^I$", replacement="Independent")
+data_frame$party <- str_replace(string=data_frame$party, pattern="^all$", replacement="All")
+
+# Transform participants by rounding them to integers
+data_frame$samplesize <- round(data_frame$samplesize)
+
+# Round the adjusted approval/disapproval percentage columns to 1 significant digit
+data_frame$approve_adjusted <- round(data_frame$approve_adjusted, digits = 1)
+data_frame$disapprove_adjusted <- round(data_frame$disapprove_adjusted, digits = 1)
+
+
+# Rename headers for readability
+data_frame <- rename(data_frame, Party = party)
+data_frame <- rename(data_frame, Participants = samplesize )
+data_frame <- rename(data_frame, Pollster = pollster )
+data_frame <- rename(data_frame, "Approval Pct" = approve_adjusted)
+data_frame <- rename(data_frame, "Disapproval Pct" = disapprove_adjusted)
+data_frame <- rename(data_frame, "Poll Date"= enddate)
+
+
+# Show the final subset
+head(data_frame, n=10)
+```
+
+
+# Conclusions
+
+The answer to the central question is yes, a majority of Americans approve of Biden's handling of the corona virus epidemic. His latest poll numbers among independents remains 57%, 25% for Republicans and 92% for Democrats.  
+
+
