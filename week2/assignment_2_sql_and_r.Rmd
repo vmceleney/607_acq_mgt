@@ -1,0 +1,166 @@
+---
+title: "SQL & R"
+author: "Cliff Lee"
+date: "8/31/2021"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+### Brief
+This file accomplishes a few tasks:
+* Reads a CSV of movie ratings from GitHub
+* Separates the CSV values into three tibbles
+* Creates three tables from the tibble variables
+* Performs basic queries from the tables
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Tibble operations
+library(tidyverse)
+
+# For data cleanup
+library(stringr)
+
+# Creating tables
+library(dbplyr)
+
+# Connection to a DB
+library(DBI)
+
+```
+
+### Read the CSV of survey results
+```{r}
+# Get the data from Github and specify the string "Did not see" as a NA value
+# This helps with creating the tables later
+raw_review <- read_csv("https://raw.githubusercontent.com/cliftonleesps/607_acq_mgt/main/week2/rate_recent_movies.csv", show_col_types=FALSE, na=c("Did not see"))
+
+```
+
+### Database connection and importing
+```{r}
+# Connect to the database using the password from an environment variable
+db_connection <- dbConnect(RMariaDB::MariaDB(), user = "rstudio", password = Sys.getenv("RSTUDIO_PASS"), dbname = 'movie_reviews')
+
+
+# Make a list for creating the review connector table
+viewer_names <- raw_review$`Your name`
+
+```
+
+
+### Create the viewer table
+```{r}
+
+# The viewer table has three columns:
+# PK: viewer_id 
+#     viewer_name
+#     entry - when the response was submitted to Google Form
+viewer <- tibble::tibble(
+  viewer_id = 1:length(raw_review$`Your name`),
+  viewer_name = raw_review$`Your name`,
+  entry = raw_review$Timestamp
+)
+copy_to(db_connection, viewer, overwrite = TRUE, temporary = FALSE)
+
+```
+
+
+### Create the movie title table
+```{r}
+titles <- colnames(raw_review)
+titles <- titles[-c(1,2)] 
+
+movie <- tibble::tibble(
+  movie_id = 1:length(titles),
+  title = titles,
+)
+copy_to(db_connection, movie, overwrite = TRUE, temporary = FALSE)
+
+```
+
+### Create a connector table
+
+```{r}
+# initialize the review model
+raw_review <- select(raw_review, all_of(titles))
+review <- tibble::tibble(
+  movie_id = rep(1, length(viewer_names)),
+  viewer_id = 1:length(viewer_names),
+  rating = str_replace(raw_review[[1]], pattern = " Stars$", replacement = "")
+)
+
+# remove the first column
+titles <- titles[-c(1)] 
+raw_review <- select(raw_review, all_of(titles))
+
+# iterate through the rest of the raw_review
+for(i in seq_along(raw_review)) {       
+  review <- review %>% add_row(
+    movie_id = rep(i+1, length(viewer_names)),
+    viewer_id = 1:length(viewer_names),
+    rating = str_replace(raw_review[[i]], pattern = " Stars$", replacement = "")
+  )
+}
+
+copy_to(db_connection, review, overwrite=TRUE, temporary = FALSE)
+
+```
+
+
+### Sample Query #1
+
+Example query: Return movie titles ordered by the number of reviews
+
+```{r}
+
+# Use dplyer to query and join the movie and review tables
+
+# Natural join the review and movie tables
+movies <- as_tibble(review)
+number_of_views <- movies %>%
+  select (rating, movie_id) %>%
+  inner_join(movie) %>%
+  filter( !is.na(rating) ) %>%
+  count(movie_id)
+
+# Join again for the titles
+movie_titles <- number_of_views %>%
+  inner_join(movie)
+movie_titles <- arrange(movie_titles, desc(n) )
+
+# Clean up for displaying
+movie_titles <- select (movie_titles, c("n", "title"))
+movie_titles <- rename(movie_titles, "Number of Viewings" = n,"Title" = title)
+
+
+movie_titles
+```
+
+
+
+### Sample Query #2
+
+Example query: Return the median rating for all movies
+
+```{r}
+median_movie_ratings <- movies %>%
+  select (rating, movie_id) %>%
+  inner_join(movie) 
+
+median_movie_ratings <- median_movie_ratings %>%
+  group_by(movie_id, title) %>%
+  summarize(median_rating = median(as.numeric(rating), na.rm = TRUE)) 
+
+median_movie_ratings <- arrange( median_movie_ratings, desc(median_rating))
+
+median_movie_ratings
+```
+
+
+```{r}
+# Close the db connection so we don't tie up a server connection
+dbDisconnect(db_connection)
+```
