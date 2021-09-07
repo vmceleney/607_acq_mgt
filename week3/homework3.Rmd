@@ -20,7 +20,9 @@ library(stringr)
 ```
 
 
-### 1. Using the 173 majors listed in fivethirtyeight.com’s College Majors dataset [https://fivethirtyeight.com/features/the-economic-guide-to-picking-a-college-major/], provide code that identifies the majors that contain either "DATA" or "STATISTICS"
+#### 1. Provide code that identifies the majors that contain either “DATA” or “STATISTICS”
+
+Using the 173 majors listed in fivethirtyeight.com’s College Majors dataset [https://fivethirtyeight.com/features/the-economic-guide-to-picking-a-college-major/], provide code that identifies the majors that contain either "DATA" or "STATISTICS"
 
 ```{r}
 
@@ -49,15 +51,21 @@ Into a format like this:
 c("bell pepper", "bilberry", "blackberry", "blood orange", "blueberry", "cantaloupe", "chili pepper", "cloudberry", "elderberry", "lime", "lychee", "mulberry", "olive", "salal berry")
 
 ```{r}
+# Create a character vector representing the original data set
 stuff <- c("bell pepper", "bilberry", "blackberry", "blood orange", "blueberry", "cantaloupe", "chili pepper", "cloudberry", "elderberry", "lime", "lychee", "mulberry", "olive", "salal berry")
 
+# Start constructing the output with the beginnig declaration
 output <- "c("
+
+# Concat each element wrapped in double quotes and a comma
 for (i in (stuff)) {
   output <- str_c(output, '"',i,'",')
 }
+
+# Close the pararthesis
 output <- str_c(output,')')
 
-# gsub the ,) end of the string
+# gsub the ,) end of the string with a plain )
 output <- gsub(pattern = ",)", replacement = ")", output)
 cat(output)
 
