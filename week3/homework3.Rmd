@@ -7,15 +7,15 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-```
 
 
-```{r}
 # Tibble operations
 library(tidyverse)
 
 # For data cleanup
 library(stringr)
+
+library(htmlwidgets)
 
 ```
 
@@ -27,12 +27,12 @@ Using the 173 majors listed in fivethirtyeight.com’s College Majors dataset [h
 ```{r}
 
 # Load the CSV from Github
-all_ages = read_csv("https://raw.githubusercontent.com/cliftonleesps/607_acq_mgt/main/week3/college-majors/all-ages.csv")
+all_ages = read_csv("https://raw.githubusercontent.com/cliftonleesps/607_acq_mgt/main/week3/college-majors/all-ages.csv", show_col_types=FALSE)
 
-# Now grep for DATA
-
+# Now grep for DATA or STATISTICS
 data_statistics_majors <- grep(pattern = "(STATISTICS|DATA)", all_ages$Major)
 
+# Output the matched majors
 for (i in (data_statistics_majors)) {
   cat (sprintf("%s\n", all_ages$Major[i]))
 }
@@ -54,18 +54,18 @@ c("bell pepper", "bilberry", "blackberry", "blood orange", "blueberry", "cantalo
 # Create a character vector representing the original data set
 stuff <- c("bell pepper", "bilberry", "blackberry", "blood orange", "blueberry", "cantaloupe", "chili pepper", "cloudberry", "elderberry", "lime", "lychee", "mulberry", "olive", "salal berry")
 
-# Start constructing the output with the beginnig declaration
+# Start constructing the output with the beginning declaration
 output <- "c("
 
-# Concat each element wrapped in double quotes and a comma
+# Concatenate each element wrapped in double quotes and a comma
 for (i in (stuff)) {
   output <- str_c(output, '"',i,'",')
 }
 
-# Close the pararthesis
+# Close the parenthesis
 output <- str_c(output,')')
 
-# gsub the ,) end of the string with a plain )
+# Gsub the ,) end of the string with a plain )
 output <- gsub(pattern = ",)", replacement = ")", output)
 cat(output)
 
@@ -77,7 +77,7 @@ The two exercises below are taken from R for Data Science, 14.3.5.1 in the on-li
 #### 3. Describe, in words, what these expressions will match:
 
 
-##### (.)\1\1 
+##### (.)\\1\\1 
 
 will match any 3 consecutive characters (ex: CCC)
 
@@ -109,7 +109,7 @@ will match any 3 characters, followed by any or no characters, followed by the f
 
 
 ```{r}
-
+words <- c("sflfs", "tldkf", "jh5jlsadj", "bnmasd")
 words[str_detect(words, "^(.)((.*\\1$)|\\1?$)")]
 ```
 
@@ -119,8 +119,8 @@ words[str_detect(words, "^(.)((.*\\1$)|\\1?$)")]
 
 
 ```{r}
-str_view(words, "([a-z][a-z]).*\\1", match = TRUE)
-
+words <- c("ChurCh", "banana", "inning", "falefal", "jukebox", "killjoy" )
+str_view(words, "([a-zA-Z][a-zA-Z]).*\\1", match = TRUE)
 ```
 
 
@@ -128,7 +128,8 @@ str_view(words, "([a-z][a-z]).*\\1", match = TRUE)
 
 
 ```{r}
-str_view(words, "([a-z]).*\\1.*\\1", match = TRUE)
+words <- c("inning", "mannning", "Outbound", "LOLLIPOP")
+str_view(words, "([a-zA-Z]).*\\1.*\\1", match = TRUE)
 
 ```
 
