@@ -51,22 +51,21 @@ Into a format like this:
 c("bell pepper", "bilberry", "blackberry", "blood orange", "blueberry", "cantaloupe", "chili pepper", "cloudberry", "elderberry", "lime", "lychee", "mulberry", "olive", "salal berry")
 
 ```{r}
-# Create a character vector representing the original data set
-stuff <- c("bell pepper", "bilberry", "blackberry", "blood orange", "blueberry", "cantaloupe", "chili pepper", "cloudberry", "elderberry", "lime", "lychee", "mulberry", "olive", "salal berry")
+# Create a character vector representing the original comma separted, data string
+stuff <- paste("bell pepper, bilberry, blackberry, blood orange, blueberry, cantaloupe, chili pepper, cloudberry, elderberry, lime, lychee, mulberry, olive, salal berry")
 
-# Start constructing the output with the beginning declaration
-output <- "c("
+# Initialize
+output <- ""
 
 # Concatenate each element wrapped in double quotes and a comma
-for (i in (stuff)) {
-  output <- str_c(output, '"',i,'",')
+for (i in (str_split(stuff, " *, *"))) {
+  output <- str_c(output, '"',i,'"', sep="", collapse=",")
 }
 
-# Close the parenthesis
-output <- str_c(output,')')
+# Wrap with parentheses
+output <-str_c('c(',output,')', sep="", collapse="")
 
-# Gsub the ,) end of the string with a plain )
-output <- gsub(pattern = ",)", replacement = ")", output)
+# Display the result
 cat(output)
 
 ```
